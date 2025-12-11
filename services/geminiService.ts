@@ -43,10 +43,10 @@ class GeminiService {
       });
 
       // 1. Check for Function Calls (Routing)
-      const functionCalls = result.candidates?.[0]?.content?.parts?.filter(p => p.functionCall);
+      const functionCalls = result.functionCalls;
       
       if (functionCalls && functionCalls.length > 0) {
-        const fc = functionCalls[0].functionCall;
+        const fc = functionCalls[0];
         
         // In a real system, we would execute the function here. 
         // For this Coordinator demo, we stop here and return the routing decision to the UI.
@@ -56,18 +56,17 @@ class GeminiService {
         
         return {
           id: crypto.randomUUID(),
-          text: `Mengarahkan tugas ke agen: ${fc?.name}...`,
+          text: `Mengarahkan tugas ke agen: ${fc.name}...`,
           sender: Sender.COORDINATOR,
           timestamp: new Date(),
           isRouting: true,
-          routedTo: fc?.name as AgentType,
-          functionArgs: fc?.args
+          routedTo: fc.name as AgentType,
+          functionArgs: fc.args
         };
       }
 
       // 2. Check for Text Response (Could be clarification or grounding result)
-      const textPart = result.candidates?.[0]?.content?.parts?.find(p => p.text);
-      let responseText = textPart ? textPart.text : "Tidak ada respon teks.";
+      const responseText = result.text || "Tidak ada respon teks.";
 
       // 3. Check for Grounding (Google Search)
       const groundingChunks = result.candidates?.[0]?.groundingMetadata?.groundingChunks;
@@ -88,7 +87,7 @@ class GeminiService {
 
       return {
         id: crypto.randomUUID(),
-        text: responseText || "Memproses...",
+        text: responseText,
         sender: Sender.COORDINATOR,
         timestamp: new Date(),
         groundingChunks: webSources
